@@ -2,7 +2,7 @@ module RankingModels
 
 using Distributions
 
-export PlackettLuce
+export PlackettLuce, test
 
 include("PlackettLuce.jl")
 
