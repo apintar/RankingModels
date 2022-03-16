@@ -16,7 +16,7 @@ function PlackettLuce(K::S, n::S, p::Vector{T}) where {S<:Integer, T<:Real}
 end
 
 function PlackettLuce(n::S, p::Vector{T}) where {S<:Integer, T<:Real}
-    PlackettLuce(promote(length(p), n), p)
+    PlackettLuce(convert(typeof(n), length(p)), n, p)
 end
 
 test(a::T) where {T<:Real} = println(a+1)
