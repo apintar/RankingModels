@@ -1,8 +1,8 @@
-struct PlackettLuce{S<:Integer, T<:Real} <: DiscreteMultivariateDistribution
+struct PlackettLuce{S<:Integer, TV<:AbstractVector} <: DiscreteMultivariateDistribution
     K::S
     n::S
-    p::Vector{T}
-    function PlackettLuce{S, T}(K::S, n::S, p::Vector{T}) where {S<:Integer, T<:Real}
+    p::TV
+    function PlackettLuce{S, TV}(K::S, n::S, p::TV) where {S<:Integer, TV<:AbstractVector}
         check1 = (n > 0)
         check2 = (K >= n)
         check3 = isprobvec(p)
@@ -11,11 +11,11 @@ struct PlackettLuce{S<:Integer, T<:Real} <: DiscreteMultivariateDistribution
     end
 end
 
-function PlackettLuce(K::S, n::S, p::Vector{T}) where {S<:Integer, T<:Real}
-    PlackettLuce{S, T}(K, n, p)
+function PlackettLuce(K::S, n::S, p::TV) where {S<:Integer, TV<:AbstractVector}
+    PlackettLuce{S, TV}(K, n, p)
 end
 
-function PlackettLuce(n::S, p::Vector{T}) where {S<:Integer, T<:Real}
+function PlackettLuce(n::S, p::TV) where {S<:Integer, TV<:AbstractVector}
     PlackettLuce(convert(typeof(n), length(p)), n, p)
 end
 
