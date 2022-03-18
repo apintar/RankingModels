@@ -22,16 +22,15 @@ end
 ncategories(d::PlackettLuce) = d.K
 length(d::PlackettLuce) = d.n
 
-# convert(::Type{PlackettLuce{S, TV}}, ::PlackettLuce) where {S<:Integer, TV<:AbstractVector} = PlackettLuce(d.n, TV(d.p))
-
 function _rand!(rng::AbstractRNG, d::PlackettLuce, x::AbstractVector{T}) where {T<:Integer}
     p = copy(d.p)
     x_choose = convert(typeof(x), collect(1:d.K))
     for i in 1:d.n
         choice_idx = rand(rng, Categorical(p))
         x[i] = x_choose[choice_idx]
-        delete!(p, choice_idx)
-        delete!(x_choose, choice_idx)
+        deleteat!(p, choice_idx)
+        p = p./sum(p)
+        deleteat!(x_choose, choice_idx)
     end
 end
 
@@ -39,5 +38,7 @@ function test_rand()
     p = rand(Uniform(), 5)
     p = p./sum(p)
     d = PlackettLuce(2, p)
-    return rand(d)
+    x = zeros(Int64, d.n)
+    _rand!(MersenneTwister(), d, x)
+    return x
 end
