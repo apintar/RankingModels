@@ -1,8 +1,14 @@
 module RankingModels
 
 using Distributions
+using Random
 
-export PlackettLuce, test
+import Base: length
+
+export 
+    PlackettLuce, 
+    ncategories,
+    test_rand
 
 include("PlackettLuce.jl")
 
