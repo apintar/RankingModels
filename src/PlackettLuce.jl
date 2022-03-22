@@ -7,7 +7,8 @@ struct PlackettLuce{S<:Integer, TV<:AbstractVector} <: DiscreteMultivariateDistr
         check2 = (K >= n)
         check3 = isprobvec(p)
         check4 = length(p) == K
-        check1 && check2 && check3 && check4 ? new(K, n, p) : error("invalid PlackettLuce parameters")
+        check5 = sum(p .> 0) >= n
+        check1 && check2 && check3 && check4 && check5 ? new(K, n, p) : error("invalid PlackettLuce parameters")
     end
 end
 
@@ -20,11 +21,11 @@ function PlackettLuce(n::S, p::TV) where {S<:Integer, TV<:AbstractVector}
 end
 
 ncategories(d::PlackettLuce) = d.K
-length(d::PlackettLuce) = d.n
+Base.length(d::PlackettLuce) = d.n
 
-function _rand!(rng::AbstractRNG, d::PlackettLuce, x::AbstractVector{T}) where {T<:Integer}
+function Distributions._rand!(rng::AbstractRNG, d::PlackettLuce, x::AbstractVector{T}) where {T<:Integer}
     p = copy(d.p)
-    x_choose = convert(typeof(x), collect(1:d.K))
+    x_choose = collect(1:d.K)
     for i in 1:d.n
         choice_idx = rand(rng, Categorical(p))
         x[i] = x_choose[choice_idx]
@@ -32,13 +33,17 @@ function _rand!(rng::AbstractRNG, d::PlackettLuce, x::AbstractVector{T}) where {
         p = p./sum(p)
         deleteat!(x_choose, choice_idx)
     end
+    return x
 end
 
 function test_rand()
     p = rand(Uniform(), 5)
     p = p./sum(p)
+    p = [0., 0, 0.1, 0.9, 0]
+    println(p)
     d = PlackettLuce(2, p)
-    x = zeros(Int64, d.n)
-    _rand!(MersenneTwister(), d, x)
+    # x = zeros(Int64, 2, d.n)
+    # rand!(d, x)
+    x = rand(d, 20)
     return x
 end
