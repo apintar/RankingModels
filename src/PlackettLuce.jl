@@ -31,10 +31,20 @@ function Distributions._rand!(rng::AbstractRNG, d::PlackettLuce, x::AbstractVect
         choice_idx = rand(rng, Categorical(p))
         x[i] = x_choose[choice_idx]
         deleteat!(p, choice_idx)
-        p = p./sum(p)
+        p ./= sum(p)
         deleteat!(x_choose, choice_idx)
     end
     return x
+end
+
+function Distributions._logpdf(d::PlackettLuce, x::AbstractVector{T}) where T<:Integer
+    sum_p = sum(d.p)
+    ll = 0.
+    for i in 1:d.n
+        ll += (log(d.p[x[i]]) - log(sum_p))
+        sum_p -= d.p[x[i]]
+    end
+    return(ll)
 end
 
 function test_rand(;p=nothing, K=5, nsamp=10000)
