@@ -36,14 +36,11 @@ function Distributions._rand!(rng::AbstractRNG, d::PlackettLuce, x::AbstractVect
     return x
 end
 
-function test_rand()
-    p = rand(Uniform(), 5)
+function test_rand(;p=nothing, K=5, nsamp=10000)
+    isnothing(p) && (p = rand(Uniform(), K))
     p = p./sum(p)
-    p = [0., 0, 0.1, 0.9, 0]
-    println(p)
-    d = PlackettLuce(2, p)
-    # x = zeros(Int64, 2, d.n)
-    # rand!(d, x)
-    x = rand(d, 20)
-    return x
+    d = PlackettLuce(5, p)
+    x = rand(d, nsamp)
+    y = counts(x[1, :])./nsamp
+    return (abs.(p - y)./p)*100
 end

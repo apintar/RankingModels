@@ -2,6 +2,7 @@ module RankingModels
 
 using Distributions
 using Random
+using StatsBase
 
 export 
     PlackettLuce, 
