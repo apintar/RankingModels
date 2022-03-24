@@ -22,6 +22,7 @@ end
 
 ncategories(d::PlackettLuce) = d.K
 Base.length(d::PlackettLuce) = d.n
+Base.eltype(d::PlackettLuce) = Int64
 
 function Distributions._rand!(rng::AbstractRNG, d::PlackettLuce, x::AbstractVector{T}) where {T<:Integer}
     p = copy(d.p)
