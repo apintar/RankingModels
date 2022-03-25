@@ -6,7 +6,10 @@ using StatsBase
 
 export 
     PlackettLuce, 
-    test_rand
+    order_to_ranking,
+    ranking_to_order,
+    test_rand,
+    test_ro_trans
 
 include("PlackettLuce.jl")
 
