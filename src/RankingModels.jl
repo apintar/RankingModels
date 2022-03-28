@@ -7,9 +7,7 @@ using StatsBase
 export 
     PlackettLuce, 
     order_to_ranking,
-    ranking_to_order,
-    test_rand,
-    test_ro_trans
+    ranking_to_order
 
 include("PlackettLuce.jl")
 
