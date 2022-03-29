@@ -3,6 +3,7 @@ module RankingModels
 using Distributions
 using Random
 using StatsBase
+using Optim
 
 export 
     PlackettLuce, 

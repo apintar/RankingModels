@@ -52,21 +52,40 @@ function Distributions._logpdf(d::PlackettLuce, x::AbstractVector{T}; ro="order"
     return ll
 end
 
-function fit_ll(p::T, o::AbstractMatrix) where T<:Real
-    full_p = zeros(eltype(p), length(p)+1)
-    full_p[1:length(p)] = p
-    full_p[length(p)+1] = 1. - sum(p)
+function inv_logit(logit_p::AbstractVector)
+    Km1 = length(logit_p)
+    p = ones(eltype(logit_p), Km1+1)
+    p[1:Km1] = exp.(logit_p)
+    return p./sum(p)
+end
+
+function pl_ll(logit_p::AbstractVector, o::AbstractMatrix)
+    p = inv_logit(logit_p)
     ll = 0.
     for i=1:size(o)[2]
         sum_p = 1.
         for j=1:size(o)[1]
-            ll += log(full_p[o[j, i]]) - log(sum_p)
-            sum_p -= full_p[o[j, i]]
+            ll += log(p[o[j, i]]) - log(sum_p)
+            sum_p -= p[o[j, i]]
         end
     end
     return ll
 end
 
+function fit_pl(o::AbstractMatrix, K::T) where T<:Integer
+    p = zeros(Float64, K)
+    p_tmp = counts(o[1, :])
+    p[1:length(p_tmp)] = p_tmp
+    p .+= 1.
+    p ./= sum(p)
+    logit_p0 = log.(p[1:(K-1)]./p[K])
+    f(logit_p) = -pl_ll(logit_p, o)
+    optim_res = optimize(f, logit_p0)
+    logit_p = Optim.minimizer(optim_res)
+    p = inv_logit(logit_p)
+    return PlackettLuce(K, size(o)[1], p)
+end
+    
 function order_to_ranking(d::PlackettLuce, o::AbstractVector{T}) where T<:Union{Integer, Missing}
     r = Vector{Union{eltype(o), Missing}}(undef, d.K)
     fill!(r, missing)
