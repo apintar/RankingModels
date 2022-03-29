@@ -52,6 +52,21 @@ function Distributions._logpdf(d::PlackettLuce, x::AbstractVector{T}; ro="order"
     return ll
 end
 
+function fit_ll(p::T, o::AbstractMatrix) where T<:Real
+    full_p = zeros(eltype(p), length(p)+1)
+    full_p[1:length(p)] = p
+    full_p[length(p)+1] = 1. - sum(p)
+    ll = 0.
+    for i=1:size(o)[2]
+        sum_p = 1.
+        for j=1:size(o)[1]
+            ll += log(full_p[o[j, i]]) - log(sum_p)
+            sum_p -= full_p[o[j, i]]
+        end
+    end
+    return ll
+end
+
 function order_to_ranking(d::PlackettLuce, o::AbstractVector{T}) where T<:Union{Integer, Missing}
     r = Vector{Union{eltype(o), Missing}}(undef, d.K)
     fill!(r, missing)
