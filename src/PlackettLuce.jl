@@ -1,14 +1,10 @@
 struct PlackettLuce{S<:Integer, TV<:AbstractVector} <: DiscreteMultivariateDistribution
     K::S
-    n::S
     p::TV
-    function PlackettLuce{S, TV}(K::S, n::S, p::TV) where {S<:Integer, TV<:AbstractVector}
-        check1 = (n > 0)
-        check2 = (K >= n)
-        check3 = isprobvec(p)
-        check4 = length(p) == K
-        check5 = sum(p .> 0) >= n
-        check1 && check2 && check3 && check4 && check5 ? new(K, n, p) : error("invalid PlackettLuce parameters")
+    function PlackettLuce{S, TV}(K::S, p::TV) where {S<:Integer, TV<:AbstractVector}
+        check1 = isprobvec(p)
+        check2 = length(p) == K
+        check1 && check2 ? new(K, p) : error("invalid PlackettLuce parameters")
     end
 end
 
@@ -35,6 +31,35 @@ function Distributions._rand!(rng::AbstractRNG, d::PlackettLuce, x::AbstractVect
         deleteat!(x_choose, choice_idx)
     end
     return x
+end
+
+function order_to_ranking(o::AbstractVector{T}, K::T) where T<:Integer
+    r = Vector{Union{eltype(o), Missing}}(undef, K)
+    n = length(o)
+    fill!(r, missing)
+    for i=1:n
+        r[o[i]] = i
+    end
+    return r
+end
+
+function ranking_to_order(r::AbstractVector{T}) where T<:Union{Integer, Missing}
+    K = length(r)
+    n = maximum(skipmissing(r))
+    o = Vector{Int64}(undef, n)
+    for i = 1:K
+        ismissing(r[i]) || (o[r[i]] = i)
+    end
+    return o
+end
+
+function ranking_to_order!(r::AbstractVector{T}, o::Vector{Int64}) where T<:Union{Integer, Missing}
+    # o is mutated
+    K = length(r)
+    for i = 1:K
+        ismissing(r[i]) || (o[r[i]] = i)
+    end
+    return o
 end
 
 function Distributions._logpdf(d::PlackettLuce, x::AbstractVector{T}; ro="order") where T<:Integer
@@ -85,24 +110,18 @@ function fit_pl(o::AbstractMatrix, K::T) where T<:Integer
     p = inv_logit(logit_p)
     return PlackettLuce(K, size(o)[1], p)
 end
-    
-function order_to_ranking(d::PlackettLuce, o::AbstractVector{T}) where T<:Union{Integer, Missing}
-    r = Vector{Union{eltype(o), Missing}}(undef, d.K)
-    fill!(r, missing)
-    for i=1:d.n
-        r[o[i]] = i
-    end
-    return r
-end
 
-function ranking_to_order(d::PlackettLuce, r::AbstractVector{T}) where T<:Union{Integer, Missing}
-    # wish there was a way for eltype(r) to only provide the Integer part and
-    # not the Missing part
-    o = Vector{eltype(r)}(undef, d.n)
-    for i = 1:d.K
-        ismissing(r[i]) || (o[r[i]] = i)
+function Distributions.fit_mle(::Type{<:PlackettLuce}, x::Matrix{<:Integer}; ro="order")
+    if ro == "ranking"
+        n = maximum(skipmissing(x))
+        nsamp = size(x)[2]
+        o = zeros(Int64, n, nsamp)
+        for i=1:nsamp
+            ranking_to_order!()
+        end
+    else
+        o = x
     end
-    return o
 end
 
 function test_rand(;p=nothing, K=5, nsamp=10000)
