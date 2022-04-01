@@ -10,6 +10,6 @@ export
     order_to_ranking,
     ranking_to_order
 
-include("PlackettLuce.jl")
+include("pl_dist.jl")
 
 end # module

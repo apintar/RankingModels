@@ -1,8 +1,11 @@
-function test_rand(;p=nothing, K=5, nsamp=10000)
+using Distributions
+
+function test_rand(;p=nothing, K=5, n=3, nsamp=10000)
     isnothing(p) && (p = rand(Uniform(), K))
     p = p./sum(p)
-    d = PlackettLuce(5, p)
-    x = rand(d, nsamp)
+    d = PlackettLuce(p)
+    # x = rand(d, nsamp, n)
+    
     y = counts(x[1, :])./nsamp
     return (abs.(p - y)./p)*100
 end

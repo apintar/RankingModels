@@ -8,22 +8,23 @@ struct PlackettLuce{S<:Integer, TV<:AbstractVector} <: DiscreteMultivariateDistr
     end
 end
 
-function PlackettLuce(K::S, n::S, p::TV) where {S<:Integer, TV<:AbstractVector}
-    PlackettLuce{S, TV}(K, n, p)
+function PlackettLuce(K::S, p::TV) where {S<:Integer, TV<:AbstractVector}
+    PlackettLuce{S, TV}(K, p)
 end
 
-function PlackettLuce(n::S, p::TV) where {S<:Integer, TV<:AbstractVector}
-    PlackettLuce(convert(typeof(n), length(p)), n, p)
+function PlackettLuce(p::TV) where {S<:Integer, TV<:AbstractVector}
+    PlackettLuce(length(p), p)
 end
 
 ncategories(d::PlackettLuce) = d.K
 Base.length(d::PlackettLuce) = d.K
 Base.eltype(d::PlackettLuce) = Int64
 
-function Distributions._rand!(rng::AbstractRNG, d::PlackettLuce, x::AbstractVector{T}) where {T<:Integer}
+function Distributions._rand!(rng::AbstractRNG, d::PlackettLuce, o::AbstractVector{T}, n::T) where {T<:Integer}
     p = copy(d.p)
     x_choose = collect(1:d.K)
-    for i in 1:d.n
+    fill!(o, -1)
+    for i in 1:n
         choice_idx = rand(rng, Categorical(p))
         x[i] = x_choose[choice_idx]
         deleteat!(p, choice_idx)
