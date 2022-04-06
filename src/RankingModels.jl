@@ -7,6 +7,7 @@ using Optim
 
 export 
     PlackettLuce, 
+    part_rand,
     order_to_ranking,
     ranking_to_order
 

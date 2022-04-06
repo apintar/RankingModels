@@ -12,7 +12,7 @@ function PlackettLuce(K::S, p::TV) where {S<:Integer, TV<:AbstractVector}
     PlackettLuce{S, TV}(K, p)
 end
 
-function PlackettLuce(p::TV) where {S<:Integer, TV<:AbstractVector}
+function PlackettLuce(p::TV) where TV<:AbstractVector
     PlackettLuce(length(p), p)
 end
 
@@ -20,19 +20,48 @@ ncategories(d::PlackettLuce) = d.K
 Base.length(d::PlackettLuce) = d.K
 Base.eltype(d::PlackettLuce) = Int64
 
-function Distributions._rand!(rng::AbstractRNG, d::PlackettLuce, o::AbstractVector{T}, n::T) where {T<:Integer}
-    p = copy(d.p)
-    x_choose = collect(1:d.K)
-    fill!(o, -1)
-    for i in 1:n
+function random_order!(rng::AbstractRNG, p::AbstractVector{T}, 
+                       K::Integer, n::Integer, 
+                       o::AbstractVector{S}) where {T<:Real, S<: Integer}
+    p = copy(p)
+    o_choose = collect(1:K)
+    sum_p = sum(p)
+    isapprox(sum_p, 1.0) || throw(DomainError(sum_p, "sum_p must be 1.0"))
+    for i=1:n
+        # at iteration K, there is only one choice left and the rest of the
+        # loop can be skipped
+        (i < K) || (o[i] = o_choose[1]; break)
         choice_idx = rand(rng, Categorical(p))
-        x[i] = x_choose[choice_idx]
+        o[i] = o_choose[choice_idx]
+        # if i == n, the rest of the loop can be skipped
+        (i < n) || break
+        deleteat!(o_choose, choice_idx)
+        sum_p -= p[choice_idx]
+        # throw and error if sum_p == 0
+        (sum_p > 0) || throw(DomainError(sum_p, "sum_p must be positive; check p and/or use part_rand with a smaller value for n"))
         deleteat!(p, choice_idx)
-        p ./= sum(p)
-        deleteat!(x_choose, choice_idx)
+        p ./= sum_p
+        # reset sum_p to 1
+        sum_p = 1.0
     end
-    return x
+    return o
 end
+
+function Distributions._rand!(rng::AbstractRNG, d::PlackettLuce, 
+                              o::AbstractVector{T}) where T<:Integer
+    return random_order!(rng, d.p, d.K, d.K, o)
+end
+
+function part_rand(rng::AbstractRNG, d::PlackettLuce, n::Integer, nsamp::Integer)
+    o = zeros(Int64, d.K, nsamp) 
+    for j=1:nsamp
+        # need @view because o[:, j] makes a copy by default
+        random_order!(rng, d.p, d.K, n, @view(o[:, j]))
+    end
+    return o
+end
+
+part_rand(d::PlackettLuce, n::Integer, nsamp::Integer) = part_rand(Random.GLOBAL_RNG, d, n, nsamp)
 
 function order_to_ranking(o::AbstractVector{T}, K::T) where T<:Integer
     r = Vector{Union{eltype(o), Missing}}(undef, K)
