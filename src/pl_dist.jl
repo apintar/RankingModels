@@ -64,15 +64,6 @@ end
 # so it's not essential to pass in a random number generator
 part_rand(d::PlackettLuce, n::Integer, nsamp::Integer) = part_rand(Random.GLOBAL_RNG, d, n, nsamp)
 
-function order_to_ranking(o::AbstractVector{T}, n::T) where T<:Integer
-    r = zeros(eltype(o), length(o))
-    for i=1:n
-        print(o[i])
-        r[o[i]] = i
-    end
-    return r
-end
-
 function order_to_ranking!(o::AbstractVector{T}, r::AbstractVector{T}, n::T) where T<:Integer
     fill!(r, zero(eltype(r)))
     for i=1:n
@@ -81,13 +72,10 @@ function order_to_ranking!(o::AbstractVector{T}, r::AbstractVector{T}, n::T) whe
     return r
 end
 
-function ranking_to_order(r::AbstractVector{T}) where T<:Integer
-    K = length(r)
-    o = zeros(eltype(r), K)
-    for i = 1:K
-        iszero(r[i]) || (o[r[i]] = i)
-    end
-    return o
+function order_to_ranking(o::AbstractVector{T}, n::T) where T<:Integer
+    r = Vector{Int64}(undef, length(o))
+    order_to_ranking!(o, r, n)
+    return r
 end
 
 function ranking_to_order!(r::AbstractVector{T}, o::AbstractVector{T}) where T<:Integer
@@ -95,6 +83,12 @@ function ranking_to_order!(r::AbstractVector{T}, o::AbstractVector{T}) where T<:
     for i = 1:length(r)
         iszero(r[i]) || (o[r[i]] = i)
     end
+    return o
+end
+
+function ranking_to_order(r::AbstractVector{T}) where T<:Integer
+    o = Vector{Int64}(undef, length(r))
+    ranking_to_order!(r, o)
     return o
 end
 
