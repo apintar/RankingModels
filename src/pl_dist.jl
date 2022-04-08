@@ -61,33 +61,39 @@ function part_rand(rng::AbstractRNG, d::PlackettLuce, n::Integer, nsamp::Integer
     return o
 end
 
+# so it's not essential to pass in a random number generator
 part_rand(d::PlackettLuce, n::Integer, nsamp::Integer) = part_rand(Random.GLOBAL_RNG, d, n, nsamp)
 
-function order_to_ranking(o::AbstractVector{T}, K::T) where T<:Integer
-    r = Vector{Union{eltype(o), Missing}}(undef, K)
-    n = length(o)
-    fill!(r, missing)
+function order_to_ranking(o::AbstractVector{T}, n::T) where T<:Integer
+    r = zeros(eltype(o), length(o))
+    for i=1:n
+        print(o[i])
+        r[o[i]] = i
+    end
+    return r
+end
+
+function order_to_ranking!(o::AbstractVector{T}, r::AbstractVector{T}, n::T) where T<:Integer
+    fill!(r, zero(eltype(r)))
     for i=1:n
         r[o[i]] = i
     end
     return r
 end
 
-function ranking_to_order(r::AbstractVector{T}) where T<:Union{Integer, Missing}
+function ranking_to_order(r::AbstractVector{T}) where T<:Integer
     K = length(r)
-    n = maximum(skipmissing(r))
-    o = Vector{Int64}(undef, n)
+    o = zeros(eltype(r), K)
     for i = 1:K
-        ismissing(r[i]) || (o[r[i]] = i)
+        iszero(r[i]) || (o[r[i]] = i)
     end
     return o
 end
 
-function ranking_to_order!(r::AbstractVector{T}, o::Vector{Int64}) where T<:Union{Integer, Missing}
-    # o is mutated
-    K = length(r)
-    for i = 1:K
-        ismissing(r[i]) || (o[r[i]] = i)
+function ranking_to_order!(r::AbstractVector{T}, o::AbstractVector{T}) where T<:Integer
+    fill!(o, zero(eltype(o)))
+    for i = 1:length(r)
+        iszero(r[i]) || (o[r[i]] = i)
     end
     return o
 end
