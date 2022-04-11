@@ -92,7 +92,8 @@ function ranking_to_order(r::AbstractVector{T}) where T<:Integer
     return o
 end
 
-function Distributions._logpdf(d::PlackettLuce, x::AbstractVector{T}; ro="order") where T<:Integer
+function Distributions._logpdf(d::PlackettLuce, x::AbstractVector{T};
+                               ro="order") where T<:Integer
     if (ro == "ranking") 
         o = ranking_to_order(d, x)
     else
@@ -100,7 +101,10 @@ function Distributions._logpdf(d::PlackettLuce, x::AbstractVector{T}; ro="order"
     end
     sum_p = sum(d.p)
     ll = 0.
-    for i in 1:d.n
+    for i in 1:d.K
+        # orders should have all zeros (non ordered) at the end, so break and
+        # return when the first one is encountered
+        o[i] > 0 || break
         ll += (log(d.p[o[i]]) - log(sum_p))
         sum_p -= d.p[o[i]]
     end

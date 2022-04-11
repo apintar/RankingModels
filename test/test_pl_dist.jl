@@ -70,3 +70,22 @@ function test_ro_trans_in_place(;p=nothing, n=3, K=5)
     println(all(r .== r1))
     return all(o .== o1)
 end
+
+function test_logpdf(;p=nothing, n=3, K=5)
+    !isnothing(p) || (p = rand(Uniform(), K))
+    p = p./sum(p)
+    d = PlackettLuce(p)
+    # whole order first
+    o = rand(d)
+    ll = logpdf(d, o)
+    println(p)
+    println(o)
+    println(ll)
+    # now a partial order
+    o = part_rand(d, n, 1)
+    o = o[:, 1]
+    ll = logpdf(d, o)
+    println(p)
+    println(o)
+    println(ll)
+end
