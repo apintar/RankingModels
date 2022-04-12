@@ -104,26 +104,29 @@ function Distributions._logpdf(d::PlackettLuce, x::AbstractVector{T};
     for i in 1:d.K
         # orders should have all zeros (non ordered) at the end, so break and
         # return when the first one is encountered
-        o[i] > 0 || break
+        ((o[i] > 0) && (sum_p > 0))  || break
         ll += (log(d.p[o[i]]) - log(sum_p))
         sum_p -= d.p[o[i]]
     end
     return ll
 end
 
-function inv_logit(logit_p::AbstractVector)
+function inv_logit(logit_p::AbstractVector{T}) where T<:Real
     Km1 = length(logit_p)
     p = ones(eltype(logit_p), Km1+1)
     p[1:Km1] = exp.(logit_p)
     return p./sum(p)
 end
 
-function pl_ll(logit_p::AbstractVector, o::AbstractMatrix)
+function pl_ll(logit_p::AbstractVector{S}, o::AbstractMatrix{T}) where {S<:Real, T<:Integer}
     p = inv_logit(logit_p)
     ll = 0.
     for i=1:size(o)[2]
         sum_p = 1.
         for j=1:size(o)[1]
+            # orders should have all zeros (non ordered) at the end, so break and
+            # return when the first one is encountered
+            ((o[j, i] > 0) && (sum_p > 0))  || break
             ll += log(p[o[j, i]]) - log(sum_p)
             sum_p -= p[o[j, i]]
         end
@@ -131,7 +134,7 @@ function pl_ll(logit_p::AbstractVector, o::AbstractMatrix)
     return ll
 end
 
-function fit_pl(o::AbstractMatrix, K::T) where T<:Integer
+function fit_pl(o::AbstractMatrix{T}, K::T) where T<:Integer
     p = zeros(Float64, K)
     p_tmp = counts(o[1, :])
     p[1:length(p_tmp)] = p_tmp
@@ -139,21 +142,23 @@ function fit_pl(o::AbstractMatrix, K::T) where T<:Integer
     p ./= sum(p)
     logit_p0 = log.(p[1:(K-1)]./p[K])
     f(logit_p) = -pl_ll(logit_p, o)
-    optim_res = optimize(f, logit_p0)
+    optim_res = optimize(f, logit_p0, LBFGS(); autodiff=:forward)
     logit_p = Optim.minimizer(optim_res)
     p = inv_logit(logit_p)
-    return PlackettLuce(K, size(o)[1], p)
+    return PlackettLuce(p)
 end
 
-function Distributions.fit_mle(::Type{<:PlackettLuce}, x::Matrix{<:Integer}; ro="order")
+function Distributions.fit_mle(::Type{<:PlackettLuce}, x::Matrix{T}; 
+                               ro="order") where T<:Integer
+    K = size(x)[1]
     if ro == "ranking"
-        n = maximum(skipmissing(x))
         nsamp = size(x)[2]
-        o = zeros(Int64, n, nsamp)
+        o = zeros(Int64, K, nsamp)
         for i=1:nsamp
-            ranking_to_order!()
+            ranking_to_order!(x[:, i], @view(o[:, i]))
         end
     else
         o = x
     end
+    return fit_pl(o, K)
 end

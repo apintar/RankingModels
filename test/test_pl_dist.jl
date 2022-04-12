@@ -89,3 +89,19 @@ function test_logpdf(;p=nothing, n=3, K=5)
     println(o)
     println(ll)
 end
+
+function test_fit_mle(;p=nothing, n=3, K=5, nsamp=150)
+    !isnothing(p) || (p = rand(Uniform(), K))
+    p = p./sum(p)
+    d = PlackettLuce(p)
+    # whole order first
+    o = rand(d, nsamp)   
+    pl_mle = fit_mle(PlackettLuce, o)
+    println(d)
+    println(pl_mle)
+    # partial order
+    o = part_rand(d, n, nsamp)
+    pl_mle = fit_mle(PlackettLuce, o)
+    println(d)
+    println(pl_mle)
+end
