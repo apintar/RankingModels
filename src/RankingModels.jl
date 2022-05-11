@@ -14,5 +14,6 @@ export
     ranking_to_order!
 
 include("pl_dist.jl")
+include("pl_reg.jl")
 
 end # module
