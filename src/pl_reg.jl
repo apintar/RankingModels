@@ -6,7 +6,6 @@ function sim_reg_data(X::AbstractMatrix{T},
     !ismissing(n[1]) || (n = [K])
     # in case n is different from 1 or n_obs
     n = repeat(n, outer=Int64(ceil(n_obs/length(n))))
-    println(n)
     n = n[1:n_obs]
     o = Matrix{Int64}(undef, K, n_obs)
     logit_p = beta*X
@@ -22,9 +21,22 @@ function pl_reg_ll(beta::AbstractMatrix{T},
                    X::AbstractMatrix{T}, 
                    o::AbstractMatrix{S},
                    K::Int64,
-                   n::Int64) where {T<:Real, S<:Integer}
+                   n_obs::Int64) where {T<:Real, S<:Integer}
 
-    logit_p = Matrix{Float64}(undef, K, n)
+    logit_p = beta*X
+    ll = 0.0
+    for i=1:n_obs
+        p = inv_logit(logit_p[:, i])
+        sum_p = 1.0
+        for j=1:K
+            # orders should have all zeros (non ordered) at the end, so break and
+            # return when the first one is encountered
+            ((o[j, i] > 0) && (sum_p > 0))  || break
+            ll += log(p[o[j, i]]) - log(sum_p)
+            sum_p -= p[o[j, i]]
+        end
+    end
+    return ll
 end
 
 function fit_pl_reg(X::AbstractMatrix{T}, 
