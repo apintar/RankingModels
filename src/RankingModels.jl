@@ -13,7 +13,8 @@ export
     order_to_ranking!,
     ranking_to_order!,
     sim_reg_data,
-    pl_reg_ll
+    pl_reg_ll,
+    fit_pl_reg
 
 include("pl_dist.jl")
 include("pl_reg.jl")

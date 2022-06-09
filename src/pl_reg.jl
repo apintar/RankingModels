@@ -17,21 +17,22 @@ function sim_reg_data(X::AbstractMatrix{T},
     return o
 end
 
-function pl_reg_ll(beta::AbstractMatrix{T}, 
-                   X::AbstractMatrix{T}, 
-                   o::AbstractMatrix{S},
-                   K::Int64,
-                   n_obs::Int64) where {T<:Real, S<:Integer}
+function pl_reg_ll(beta::AbstractVector{R},
+    X::AbstractMatrix{S},
+    o::AbstractMatrix{T},
+    K::Int64,
+    n_obs::Int64) where {R<:Real,S<:Real,T<:Integer}
 
-    logit_p = beta*X
+    beta_mat = reshape(beta, K-1, size(X)[1])
+    logit_p = beta_mat * X
     ll = 0.0
-    for i=1:n_obs
+    for i = 1:n_obs
         p = inv_logit(logit_p[:, i])
         sum_p = 1.0
-        for j=1:K
+        for j = 1:K
             # orders should have all zeros (non ordered) at the end, so break and
             # return when the first one is encountered
-            ((o[j, i] > 0) && (sum_p > 0))  || break
+            ((o[j, i] > 0) && (sum_p > 0)) || break
             ll += log(p[o[j, i]]) - log(sum_p)
             sum_p -= p[o[j, i]]
         end
@@ -39,9 +40,16 @@ function pl_reg_ll(beta::AbstractMatrix{T},
     return ll
 end
 
-function fit_pl_reg(X::AbstractMatrix{T}, 
-                    o::AbstractMatrix{S}) where {T<:Real, S<:Integer}
+function fit_pl_reg(X::AbstractMatrix{T},
+    o::AbstractMatrix{S}) where {T<:Real,S<:Integer}
+
     K = size(o)[1]
-    n = size(o)[2]
-    (size(X)[2] == n) || error("must have size(o)[2] == size(X)[2]")
+    n_obs = size(o)[2]
+    (size(X)[2] == n_obs) || error("must have size(o)[2] == size(X)[2]")
+    m = size(X)[1]
+    beta0 = rand((K - 1)*m)
+    f(beta) = -pl_reg_ll(beta, X, o, K, n_obs)
+    # mle = optimize(f, beta0, BFGS(); autodiff=:forward)
+    mle = optimize(f, beta0, method=NelderMead(), iterations=10_000)
+    return mle
 end
