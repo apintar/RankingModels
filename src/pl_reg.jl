@@ -49,7 +49,10 @@ function fit_pl_reg(X::AbstractMatrix{T},
     m = size(X)[1]
     beta0 = rand((K - 1)*m)
     f(beta) = -pl_reg_ll(beta, X, o, K, n_obs)
-    # mle = optimize(f, beta0, BFGS(); autodiff=:forward)
-    mle = optimize(f, beta0, method=NelderMead(), iterations=10_000)
+    # Note that BFGS does not seem to work, but LBFGS does
+    # not sure why
+    mle = optimize(f, beta0, LBFGS(); autodiff=:forward)
+    # This call to optimize woks too, but seems slower than using LBFGS
+    # mle = optimize(f, beta0, method=NelderMead(), iterations=10_000)
     return mle
 end
